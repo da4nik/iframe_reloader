@@ -55,7 +55,7 @@
       source = innerDoc.querySelector('[' + opts.replacementContainerAttribute + ']'),
       target = document.querySelector('[' + opts.replacementContainerAttribute + ']');
 
-    history.pushState({ifr: true}, document.title, removeIFRParameter(innerDoc.location.href));
+    history.pushState(null, document.title, removeIFRParameter(innerDoc.location.href));
     target.innerHTML = source.innerHTML;
 
     // прикинемся pjaxом
@@ -84,9 +84,7 @@
   }
 
   function popstateHandler(event) {
-    if (event.state !== null && event.state.ifr) {
-      requestPage(window.location.href);
-    }
+    requestPage(window.location.href);
   }
 
   ifr.configure = function (options) {
