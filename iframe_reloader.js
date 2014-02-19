@@ -1,80 +1,62 @@
-(function (window, document, undefined) {
-  "use strict";
+(function (ifr) {
+  'use strict';
 
-  if (window.IFrameReloader) { return; }
-
-  var settings = {
+  var opts = {
     urlParam: '_ifr',
     dataUrlAttribute: 'data-ifr-url',
     replacementContainerAttribute: 'data-pjax-container',
-    iframeId: 'util-iframe',
-    popstateEventBound: false
+    iframeId: 'util-iframe'
   };
 
-  function addEventHandler(elem, eventType, handler) {
-    if (elem.addEventListener)
-      elem.addEventListener (eventType,handler,false);
-    else if (elem.attachEvent)
-      elem.attachEvent ('on'+eventType,handler);
-  }
-
-  function fireEvent(element, event){
-    if (document.createEventObject){
-      var evt = document.createEventObject();
-      return element.fireEvent('on'+event, evt)
+  function extend(options, defaults) {
+    var result = defaults || {}, key;
+    for (key in options) {
+      if (options.hasOwnProperty(key)) {
+        result[key] = options[key];
+      }
     }
-    else{
-      var evt = document.createEvent("HTMLEvents");
-      evt.initEvent(event, true, true );
-      return !element.dispatchEvent(evt);
+    return result;
+  }
+
+  function fireEvent(element, event) {
+    var evt, result;
+    if (document.createEventObject) {
+      evt = document.createEventObject();
+      result = element.fireEvent('on' + event, evt);
+    } else {
+      evt = document.createEvent("HTMLEvents");
+      evt.initEvent(event, true, true);
+      result = !element.dispatchEvent(evt);
     }
+    return result;
   }
 
-  var IFrameReloader = function(settings) {
-    settings = settings || {};
-    this.urlParam = settings.url_param || '_ifr';
-    this.dataUrlAttribute = settings.data_url_param || 'data-irf-url';
-  }
-
-  IFrameReloader.prototype = {
-    init: function () {
-    }
-  }
-
-  IFrameReloader.popstateHandler = function(event) {
-    if (event.state.ifr) {
-      IFrameReloader.requestPage(window.location.href);
-    }
-  }
-
-  IFrameReloader.onloadHandler = function(event) {
+  function onloadHandler(event) {
     event.preventDefault();
 
     function removeIFRParameter(url) {
       if (url.indexOf('?') < 0) { return url; }
       var result = url.split('?')[0],
-          params = url.split('?')[1].split('&');
+        params = url.split('?')[1].split('&'),
+        index;
 
-      for (var index in params) {
-        if (params[index].indexOf(settings.urlParam) == 0) {
-          params.splice(index, 1);
+      for (index in params) {
+        if (params.hasOwnProperty(index)) {
+          if (params[index].indexOf(opts.urlParam) === 0) {
+            params.splice(index, 1);
+          }
         }
       }
       return result + (params.length > 0 ? '?' : '') + params.join('&');
     }
 
     var iframe = event.currentTarget,
-        innerDoc = iframe.contentDocument || iframe.contentWindow.document,
-        source = innerDoc.querySelector('[' + settings.replacementContainerAttribute + ']'),
-        target = document.querySelector('[' + settings.replacementContainerAttribute + ']');
+      innerDoc = iframe.contentDocument || iframe.contentWindow.document,
+      source = innerDoc.querySelector('[' + opts.replacementContainerAttribute + ']'),
+      target = document.querySelector('[' + opts.replacementContainerAttribute + ']');
 
     history.pushState({ifr: true}, document.title, removeIFRParameter(innerDoc.location.href));
     target.innerHTML = source.innerHTML;
-
-    if (!settings.popstateEventBound) {
-      addEventHandler(window, 'popstate', IFrameReloader.popstateHandler);
-      settings.popstateEventBound = true;
-    }
 
     // прикинемся pjaxом
     fireEvent(document, 'pjax:end');
@@ -82,25 +64,36 @@
     iframe.remove();
   }
 
-  IFrameReloader.onerrorHandler = function(event) {
+  function onerrorHandler(event) {
     event.preventDefault();
     event.currentTarget.remove();
   }
 
-  IFrameReloader.requestPage = function(url) {
+  function requestPage(url) {
     var iframe = document.createElement('iframe');
-        url =  url + (url.indexOf('?') > 0 ?  '&' : '?') + settings.urlParam +'=true';
+
+    url =  url + (url.indexOf('?') > 0 ?  '&' : '?') + opts.urlParam + '=true';
 
     iframe.setAttribute('style', 'width: 0; height: 0; display: none');
     iframe.setAttribute('sandbox', 'allow-same-origin');
-    iframe.setAttribute('id', settings.iframeId);
-    iframe.onload = IFrameReloader.onloadHandler;
-    iframe.onerror = iframe.onabort = IFrameReloader.onerrorHandler;
+    iframe.setAttribute('id', opts.iframeId);
+    iframe.onload = onloadHandler;
+    iframe.onerror = iframe.onabort = onerrorHandler;
     iframe.setAttribute('src', url);
     document.body.appendChild(iframe);
   }
 
-  IFrameReloader.click = function(event) {
+  function popstateHandler(event) {
+    if (event.state !== null && event.state.ifr) {
+      requestPage(window.location.href);
+    }
+  }
+
+  ifr.configure = function (options) {
+    opts = extend(options, opts);
+  };
+
+  ifr.click = function (event) {
     // Fallback if history api not supported
     if (!(window.history && window.history.pushState)) {
       return;
@@ -108,15 +101,18 @@
     event.preventDefault();
 
     var element = event.currentTarget,
-        url = element.hasOwnProperty(settings.dataUrlAttribute) ?
-                element.getAttribute(settings.dataUrlAttribute) :
-                element.getAttribute('href');
+      url = element.hasOwnProperty(opts.dataUrlAttribute) ?
+          element.getAttribute(opts.dataUrlAttribute) :
+          element.getAttribute('href');
 
-    if (typeof url === 'undefined') { return; }
+    if (url === 'undefined') { return; }
 
-    IFrameReloader.requestPage(url);
+    requestPage(url);
+  };
+
+  function init() {
+    window.addEventListener('popstate', popstateHandler, false);
   }
+  init();
 
-
-  window.IFrameReloader = IFrameReloader;
-})(window, document);
+}(window.IFrameReloader = window.IFrameReloader || {}));
