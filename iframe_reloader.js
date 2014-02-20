@@ -5,7 +5,9 @@
     urlParam: '_ifr',
     dataUrlAttribute: 'data-ifr-url',
     replacementContainerAttribute: 'data-pjax-container',
-    iframeId: 'util-iframe'
+    iframeId: 'util-iframe',
+    onload: null,
+    onerror: null
   },
     support = {
       historyApi: !!(window.history && window.history.pushState)
@@ -61,15 +63,14 @@
     history.pushState(null, document.title, removeIFRParameter(innerDoc.location.href));
     target.innerHTML = source.innerHTML;
 
-    // прикинемся pjaxом
-    fireEvent(document, 'pjax:end');
-
     iframe.remove();
+    if (opts.onload) { opts.onload(event); }
   }
 
   function onerrorHandler(event) {
     event.preventDefault();
     event.currentTarget.remove();
+    if (opts.onerror) { opts.onerror(event); }
   }
 
   function requestPage(url) {

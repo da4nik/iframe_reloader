@@ -21,7 +21,9 @@ IFrameReloader.configure({
     urlParam: '_ifr',
     dataUrlAttribute: 'data-ifr-url',
     replacementContainerAttribute: 'data-pjax-container',
-    iframeId: 'util-iframe'
+    iframeId: 'util-iframe',
+    onload: function() { console.log('success'); },
+    onerror: function() { console.log('error or abort'); }
 });
 ```
 
@@ -33,4 +35,6 @@ urlParam | Parameter name to add to request, for server to know that the request
 dataUrlAttribute | Attribute to get url for request, or if it is link, url will get from href attribute
 replacementContainerAttribute | Attribute to change content of successfully loaded page and current page
 iframeId | id of created iframe if needed
+onload | Callback on successfully loaded page
+onerror | Callback on error or abort loading page
 
