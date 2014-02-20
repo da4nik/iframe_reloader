@@ -1,6 +1,6 @@
 # What is it ?
 
-A tool to reload necessary part of the page, and leave js and css intact for faster loading and stuff like constantly playing player and so on.
+A tool to reload necessary part of the page, and leave js and css intact for faster loading and stuff like constantly playing player and so on. And responsive reloading behaviour by browser loading progress.
 
 # How to use ?
 
