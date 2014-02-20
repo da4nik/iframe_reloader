@@ -28,19 +28,6 @@
     return result;
   }
 
-  function fireEvent(element, event) {
-    var evt, result;
-    if (document.createEventObject) {
-      evt = document.createEventObject();
-      result = element.fireEvent('on' + event, evt);
-    } else {
-      evt = document.createEvent("HTMLEvents");
-      evt.initEvent(event, true, true);
-      result = !element.dispatchEvent(evt);
-    }
-    return result;
-  }
-
   function onloadHandler(event) {
     event.preventDefault();
 
@@ -67,6 +54,7 @@
 
     history.pushState(null, document.title, removeIFRParameter(innerDoc.location.href));
     target.innerHTML = source.innerHTML;
+    document.title = innerDoc.title;
 
     iframe.remove();
     if (isFunction(opts.onload)) { opts.onload(event); }
