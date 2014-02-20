@@ -13,6 +13,11 @@
       historyApi: !!(window.history && window.history.pushState)
     };
 
+  function isFunction(func) {
+    var getType = {};
+    return func && getType.toString.call(func) === '[object Function]';
+  }
+
   function extend(options, defaults) {
     var result = defaults || {}, key;
     for (key in options) {
@@ -64,13 +69,13 @@
     target.innerHTML = source.innerHTML;
 
     iframe.remove();
-    if (opts.onload) { opts.onload(event); }
+    if (isFunction(opts.onload)) { opts.onload(event); }
   }
 
   function onerrorHandler(event) {
     event.preventDefault();
     event.currentTarget.remove();
-    if (opts.onerror) { opts.onerror(event); }
+    if (isFunction(opts.onerror)) { opts.onerror(event); }
   }
 
   function requestPage(url) {
