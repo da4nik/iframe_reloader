@@ -6,7 +6,10 @@
     dataUrlAttribute: 'data-ifr-url',
     replacementContainerAttribute: 'data-pjax-container',
     iframeId: 'util-iframe'
-  };
+  },
+    support = {
+      historyApi: !!(window.history && window.history.pushState)
+    };
 
   function extend(options, defaults) {
     var result = defaults || {}, key;
@@ -92,8 +95,7 @@
   };
 
   ifr.click = function (event) {
-    // Fallback if history api not supported
-    if (!(window.history && window.history.pushState)) {
+    if (!support.historyApi) {
       return;
     }
     event.preventDefault();
@@ -104,6 +106,14 @@
           element.getAttribute('href');
 
     if (url === 'undefined') { return; }
+
+    requestPage(url);
+  };
+
+  ifr.go = function (url) {
+    if (!support.historyApi) {
+      return;
+    }
 
     requestPage(url);
   };
