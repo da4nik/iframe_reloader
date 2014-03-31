@@ -6,10 +6,12 @@
   var opts = {
     urlParam: '_ifr',
     dataUrlAttribute: 'data-ifr-url',
+    dataLabelAttribute: 'data-ifr-label',
     replacementContainerAttribute: 'data-ifr-container',
     iframeId: 'util-iframe',
     onload: null,
     onerror: null,
+    onclick: null,
     useProgressBar: true,
     progressBarId: 'ifr-progress',
     progressInnerBarClass: 'indicator',
@@ -147,9 +149,17 @@
     }
 
     var iframe = event.currentTarget,
+      iframeLabel = iframe.getAttribute(opts.dataLabelAttribute),
       innerDoc = iframe.contentDocument || iframe.contentWindow.document,
-      source = innerDoc.querySelector('[' + opts.replacementContainerAttribute + ']'),
-      target = document.querySelector('[' + opts.replacementContainerAttribute + ']');
+      selector = '[' + opts.replacementContainerAttribute + '=""]',
+      source,
+      target;
+
+    if (iframeLabel) {
+      selector = ['[', opts.replacementContainerAttribute, '="', iframeLabel, '"]'].join('');
+    }
+    source = innerDoc.querySelector(selector);
+    target = document.querySelector(selector);
 
     if (source ===  null) {
       onerrorHandler(event);
@@ -165,14 +175,17 @@
     hideProgress();
   }
 
-  function requestPage(url) {
+  function requestPage(url, label) {
     var iframe = document.createElement('iframe');
 
     url =  url + (url.indexOf('?') > 0 ?  '&' : '?') + opts.urlParam + '=true';
 
     iframe.setAttribute('style', 'width: 0; height: 0; display: none');
-    iframe.setAttribute('sandbox', 'allow-same-origin');
+    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
     iframe.setAttribute('id', opts.iframeId);
+    if (label) {
+      iframe.setAttribute(opts.dataLabelAttribute, label);
+    }
     iframe.onload = onloadHandler;
     iframe.onerror = iframe.onabort = onerrorHandler;
     iframe.setAttribute('src', url);
@@ -204,19 +217,25 @@
     var element = event.currentTarget,
       url = element.hasOwnProperty(opts.dataUrlAttribute) ?
           element.getAttribute(opts.dataUrlAttribute) :
-          element.getAttribute('href');
+          element.getAttribute('href'),
+      label;
+
+    if (isFunction(opts.onclick)) { opts.onclick.call(element); }
 
     if (url === 'undefined') { return; }
+    if (element.hasAttribute(opts.dataLabelAttribute)) {
+      label = element.getAttribute(opts.dataLabelAttribute);
+    }
 
-    requestPage(url);
+    requestPage(url, label);
   };
 
-  ifr.go = function (url) {
+  ifr.go = function (url, label) {
     if (!support.historyApi) {
       return;
     }
 
-    requestPage(url);
+    requestPage(url, label);
   };
 
   ifr.setProgress = setProgress;
